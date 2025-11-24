@@ -2,4 +2,4 @@ blinker==1.4
 cryptography==3.4.8
 oauthlib==3.2.0
 PyJWT==2.3.0
-PyYAML==5.4.1
+PyYAML==6.0.2
