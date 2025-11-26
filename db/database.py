@@ -20,3 +20,19 @@ def get_user_by_email(email):
     conn.close()
 
     return result
+
+
+def insert_user(firstname, lastname, email, password_hash, salt, pk, sk):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    query = """
+        INSERT INTO users (firstname, lastname, email, password_hash, salt, first_login, public_key, private_key)
+        VALUES (%s, %s, %s, %s, %s, TRUE, %s, %s)
+    """
+
+    cursor.execute(query, (firstname, lastname, email, password_hash, salt, pk, sk))
+    conn.commit()
+
+    cursor.close()
+    conn.close()
