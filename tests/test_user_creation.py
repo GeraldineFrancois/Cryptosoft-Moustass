@@ -4,7 +4,10 @@ from db.database import get_user_by_email
 def test_create_user():
     email = "test_user@example.com"
 
-    create_user("John", "Doe", email)
+    temp_password = create_user("John", "Doe", email)
+
+    assert temp_password is not None
+    assert len(temp_password) >= 12
 
     user = get_user_by_email(email)
 
