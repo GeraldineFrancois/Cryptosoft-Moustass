@@ -1,22 +1,23 @@
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives import serialization
 
-def generate_rsa_keypair():
+def generate_rsa_keys():
     private_key = rsa.generate_private_key(
         public_exponent=65537,
-        key_size=2048
+        key_size=2048  # conforme SonarCloud
     )
+
     public_key = private_key.public_key()
 
-    sk_pem = private_key.private_bytes(
+    private_pem = private_key.private_bytes(
         encoding=serialization.Encoding.PEM,
-        format=serialization.PrivateFormat.TraditionalOpenSSL,
+        format=serialization.PrivateFormat.PKCS8,
         encryption_algorithm=serialization.NoEncryption()
-    ).decode()
+    )
 
-    pk_pem = public_key.public_bytes(
+    public_pem = public_key.public_bytes(
         encoding=serialization.Encoding.PEM,
         format=serialization.PublicFormat.SubjectPublicKeyInfo
-    ).decode()
+    )
 
-    return pk_pem, sk_pem
+    return public_pem.decode(), private_pem.decode()
