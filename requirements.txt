@@ -1,11 +1,8 @@
-<<<<<<< HEAD
 blinker==1.4
 cryptography==3.4.8
 oauthlib==3.2.0
 PyJWT==2.3.0
 PyYAML==6.0.2
-=======
 mysql-connector-python
 cryptography
 tkinter
->>>>>>> ad68792ac424a064a5cb2ffdae67cf5aee2e365e
