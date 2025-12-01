@@ -5,3 +5,4 @@ PyJWT==2.3.0
 PyYAML==6.0.2
 mysql-connector-python
 cryptography
+pytest==9.0.1
