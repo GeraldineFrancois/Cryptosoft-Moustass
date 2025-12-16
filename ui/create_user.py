@@ -2,14 +2,12 @@ import tkinter as tk
 from tkinter import messagebox
 
 from security.validator import validate_name, validate_email, validate_password
-from security.hashing import hash_password, generate_salt
-from security.rsa_utils import generate_rsa_keypair
-from db.database import insert_user
+from services.user_service import create_user as service_create_user
 
 
 class CreateUserWindow:
-    def __init__(self):
-        self.root = tk.Toplevel()
+    def __init__(self, parent=None):
+        self.root = tk.Toplevel(parent) if parent is not None else tk.Toplevel()
         self.root.title("Créer un compte utilisateur")
 
         tk.Label(self.root, text="Prénom :").grid(row=0, column=0, padx=10, pady=5)
@@ -57,14 +55,8 @@ class CreateUserWindow:
             messagebox.showerror("Erreur", "Mot de passe non conforme.")
             return
 
-        # 2. Hash + Salt
-        salt = generate_salt()
-        password_hash = hash_password(password, salt)
+        # 2. Create user via service (service generates temp password and keys)
+        full_name = f"{firstname} {lastname}".strip()
+        temp_password, _, _ = service_create_user(full_name, email)
 
-        # 3. Générer RSA PK/SK
-        pk, sk = generate_rsa_keypair()
-
-        # 4. Enregistrer en DB
-        insert_user(firstname, lastname, email, password_hash, salt, pk, sk)
-
-        messagebox.showinfo("Succès", "Utilisateur créé avec succès !")
+        messagebox.showinfo("Succès", f"Utilisateur créé avec succès !\nMot de passe temporaire : {temp_password}")

@@ -1,4 +1,8 @@
-from ui.login import LoginWindow
+import tkinter as tk
+from ui.login import open_admin_dashboard
 
 if __name__ == "__main__":
-    LoginWindow()
+    root = tk.Tk()
+    root.withdraw() 
+    open_admin_dashboard(root)
+    root.mainloop()
