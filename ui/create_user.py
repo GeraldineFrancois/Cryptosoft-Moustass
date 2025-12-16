@@ -3,7 +3,6 @@ from tkinter import messagebox
 
 from security.validator import validate_name, validate_email, validate_password
 from security.hashing import hash_password, generate_salt
-from security.rsa_utils import generate_rsa_keypair
 from db.database import insert_user
 
 
@@ -58,13 +57,12 @@ class CreateUserWindow:
             return
 
         # 2. Hash + Salt
-        salt = generate_salt()
-        password_hash = hash_password(password, salt)
+        password_salt = generate_salt()
+        password_hash = hash_password(password, password_salt)
 
-        # 3. Générer RSA PK/SK
-        pk, sk = generate_rsa_keypair()
+        # 3. Do NOT generate or store private keys here. The user will generate keys client-side on first login.
 
-        # 4. Enregistrer en DB
-        insert_user(firstname, lastname, email, password_hash, salt, pk, sk)
+        # 4. Enregistrer en DB (no private key stored)
+        insert_user(firstname, lastname, email, password_hash, password_salt)
 
         messagebox.showinfo("Succès", "Utilisateur créé avec succès !")

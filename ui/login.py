@@ -31,7 +31,7 @@ class LoginWindow:
             messagebox.showerror("Erreur", "Utilisateur non trouvé.")
             return
 
-        hashed = hash_password(password, user["salt"])
+        hashed = hash_password(password, user["password_salt"])
 
         if hashed != user["password_hash"]:
             messagebox.showerror("Erreur", "Mot de passe incorrect.")
@@ -44,4 +44,3 @@ class LoginWindow:
             return
 
         messagebox.showinfo("Succès", f"Bienvenue {user['firstname']} !")
-
