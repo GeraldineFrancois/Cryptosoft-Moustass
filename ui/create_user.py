@@ -55,8 +55,8 @@ class CreateUserWindow:
             messagebox.showerror("Erreur", "Mot de passe non conforme.")
             return
 
-        # 2. Create user via service (service generates temp password and keys)
+        # 2. Create user via service (service generates temp password)
         full_name = f"{firstname} {lastname}".strip()
-        temp_password, _, _ = service_create_user(full_name, email)
+        temp_password = service_create_user(full_name, email)
 
         messagebox.showinfo("Succès", f"Utilisateur créé avec succès !\nMot de passe temporaire : {temp_password}")

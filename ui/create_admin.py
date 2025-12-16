@@ -28,7 +28,7 @@ class CreateAdminWindow:
         name = self.name_entry.get()
         email = self.email_entry.get()
 
-        temp_password, _, _ = create_admin(name, email)
+        temp_password = create_admin(name, email)
 
         messagebox.showinfo(
             "Admin créé",

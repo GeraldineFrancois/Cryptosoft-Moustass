@@ -36,24 +36,23 @@ def create_user(*args, role: str = "USER"):
         raise TypeError("create_user expects (first,last,email) or (name,email)")
 
     temp_password = generate_temp_password()
-    salt, password_hash = hash_password(temp_password)
-    public_key, private_key = generate_rsa_keys()
+    password_hash = hash_password(temp_password)
 
     conn = get_connection()
     cursor = conn.cursor()
 
     query = """
-        INSERT INTO users (name, email, role, password_hash, salt, public_key, private_key, is_first_password)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, 1)
+        INSERT INTO users (name, email, role, password_hash, is_first_password)
+        VALUES (%s, %s, %s, %s, 1)
     """
 
-    cursor.execute(query, (name, email, role, password_hash, salt, public_key, private_key))
+    cursor.execute(query, (name, email, role, password_hash))
     conn.commit()
 
     cursor.close()
     conn.close()
 
-    return temp_password, public_key, private_key
+    return temp_password
 
 
 def create_admin(name: str, email: str):
@@ -76,7 +75,7 @@ def login_admin(email: str, password: str):
     cursor = conn.cursor(dictionary=True)
 
     cursor.execute("""
-        SELECT idusers, name, email, role, password_hash, salt, public_key, private_key, is_first_password
+        SELECT idusers, name, email, role, password_hash, is_first_password
         FROM users
         WHERE email = %s
     """, (email,))
@@ -92,12 +91,8 @@ def login_admin(email: str, password: str):
     if user["role"] != "ADMIN":
         return None
 
-    # Verify password using the hashing util (use stored salt)
-    stored_salt = user.get("salt")
-    if stored_salt is None:
-        return None
-
-    if verify_password(password, stored_salt, user["password_hash"]):
+    # Verify password using the hashing util
+    if verify_password(password, user["password_hash"]):
         return user
 
     return None
@@ -106,16 +101,16 @@ def login_admin(email: str, password: str):
 # -------------------- PASSWORD RESET ---------------------
 
 def update_password(user_id: int, new_password: str):
-    salt, hashed = hash_password(new_password)
+    hashed = hash_password(new_password)
 
     conn = get_connection()
     cursor = conn.cursor()
 
     cursor.execute("""
         UPDATE users
-        SET password_hash = %s, salt = %s, is_first_password = 0
+        SET password_hash = %s, is_first_password = 0
         WHERE idusers = %s
-    """, (hashed, salt, user_id))
+    """, (hashed, user_id))
 
     conn.commit()
     cursor.close()

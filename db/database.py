@@ -12,7 +12,7 @@ def get_connection():
         conn = mysql.connector.connect(
             host=os.getenv("DB_HOST", "localhost"),
             user=os.getenv("DB_USER", "root"),
-            password=os.getenv("DB_PASSWORD", ""),
+            password=os.getenv("DB_PASSWORD", "MyStrongP@ss123!"),
             database=os.getenv("DB_NAME", "moustass_db")
         )
 
@@ -35,7 +35,7 @@ def get_user_by_email(email: str):
     cursor = conn.cursor(dictionary=True)
 
     query = """
-        SELECT idusers, name, email, role, password_hash, salt, public_key, private_key, is_first_password
+        SELECT idusers, name, email, role, password_hash, is_first_password
         FROM users
         WHERE email = %s
     """
