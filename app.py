@@ -1,4 +1,4 @@
-from ui.login import LoginWindow
+from ui.login_screen import LoginApp
 
 if __name__ == "__main__":
-    LoginWindow()
+    LoginApp()

@@ -1,0 +1,14 @@
+#files
+.env
+
+# modules
+.vscode/
+.idea/
+
+#python
+__pycache__/
+
+path/
+
+# Snyk ignore
+.github/instructions/snyk_rules.instructions.md
