@@ -1,13 +1,14 @@
+import os
 from security.password_utils import hash_password, verify_password
 from security.rsa_utils import generate_rsa_keys
 
 def test_hash_and_verify_password():
-    password = "Test123!"
-    salt, hashed = hash_password(password)
+    test_pass = os.getenv("TEST_PASSWORD", "Test123!")
+    combined_hash = hash_password(test_pass)
 
-    assert hashed != password
-    assert verify_password(password, salt, hashed)
-    assert not verify_password("wrongpass", salt, hashed)
+    assert combined_hash != test_pass
+    assert verify_password(test_pass, combined_hash)
+    assert not verify_password("wrongpass", combined_hash)
 
 
 def test_rsa_key_generation():
