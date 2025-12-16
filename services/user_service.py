@@ -98,7 +98,34 @@ def login_admin(email: str, password: str):
     return None
 
 
-# -------------------- PASSWORD RESET ---------------------
+def login_user(email: str, password: str):
+    """
+    Returns user data dict if login OK, None otherwise.
+    Works for any role.
+    """
+
+    conn = get_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    cursor.execute("""
+        SELECT idusers, name, email, role, password_hash, is_first_password
+        FROM users
+        WHERE email = %s
+    """, (email,))
+
+    user = cursor.fetchone()
+
+    cursor.close()
+    conn.close()
+
+    if user is None:
+        return None
+
+    # Verify password
+    if verify_password(password, user["password_hash"]):
+        return user
+
+    return None
 
 def update_password(user_id: int, new_password: str):
     hashed = hash_password(new_password)
