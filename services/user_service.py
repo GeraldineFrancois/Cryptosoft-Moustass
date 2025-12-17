@@ -4,6 +4,9 @@ from db.database import get_connection
 from security.password_utils import hash_password, verify_password
 from security.rsa_utils import generate_rsa_keys
 
+# standardized DB connection error message
+DB_CONN_ERR = "Database connection failed: check DB credentials (DB_PASSWORD / DB_PASSWORD_FILE)."
+
 
 
 def generate_temp_password(length=12):
@@ -42,6 +45,8 @@ def create_user(*args, role: str = "USER"):
     public_key, private_key = generate_rsa_keys()
 
     conn = get_connection()
+    if conn is None:
+        raise RuntimeError(DB_CONN_ERR)
     cursor = conn.cursor()
 
     query = """
@@ -75,6 +80,8 @@ def login_admin(email: str, password: str):
     """
 
     conn = get_connection()
+    if conn is None:
+        raise RuntimeError(DB_CONN_ERR)
     cursor = conn.cursor(dictionary=True)
 
     cursor.execute("""
@@ -108,6 +115,8 @@ def login_user(email: str, password: str):
     """
 
     conn = get_connection()
+    if conn is None:
+        raise RuntimeError(DB_CONN_ERR)
     cursor = conn.cursor(dictionary=True)
 
     cursor.execute("""
@@ -134,6 +143,8 @@ def update_password(user_id: int, new_password: str):
     salt, hashed = hash_password(new_password)
 
     conn = get_connection()
+    if conn is None:
+        raise RuntimeError(DB_CONN_ERR)
     cursor = conn.cursor()
 
     cursor.execute("""
