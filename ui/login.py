@@ -104,21 +104,48 @@ class LoginWindow:
 
 class UserDashboard:
     def __init__(self, parent, user):
+        self.parent = parent
+        self.user = user
         self.window = tk.Toplevel(parent)
         self.window.title("Dashboard Utilisateur")
-        self.window.geometry("400x200")
+        self.window.geometry("400x300")
 
         tk.Label(
             self.window,
             text=f"Bonjour {user['firstname']} {user['lastname']}, vous êtes {user['role']}.",
             font=("Helvetica", 14)
-        ).pack(pady=50)
+        ).pack(pady=20)
+
+        tk.Button(
+            self.window,
+            text="Uploader un fichier de code source",
+            command=self.upload_file,
+            bg="#4CAF50",
+            fg="white",
+            relief=tk.FLAT
+        ).pack(pady=10)
 
         tk.Button(
             self.window,
             text="Fermer",
             command=self.window.destroy
-        ).pack()
+        ).pack(pady=10)
+
+    def upload_file(self):
+        from tkinter import filedialog
+        from services.user_service import upload_file
+        import tkinter.messagebox as messagebox
+
+        file_path = filedialog.askopenfilename(
+            title="Sélectionner un fichier de code source",
+            filetypes=[("Tous les fichiers", "*.*")]
+        )
+        if file_path:
+            try:
+                file_name, file_hash = upload_file(self.user['id'], file_path)
+                messagebox.showinfo("Succès", f"Fichier '{file_name}' uploadé avec succès.\nHash: {file_hash}")
+            except Exception as e:
+                messagebox.showerror("Erreur", f"Échec de l'upload: {str(e)}")
 
 
 

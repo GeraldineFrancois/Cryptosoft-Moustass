@@ -158,3 +158,41 @@ def update_password(user_id: int, new_password: str):
     conn.close()
 
     return True
+
+
+# -------------------- FILE UPLOAD ---------------------
+
+def upload_file(user_id: int, file_path: str):
+    """
+    Upload a source code file: compute SHA256 hash and store in DB.
+    """
+    import hashlib
+    import os
+
+    if not os.path.isfile(file_path):
+        raise ValueError("File does not exist or is not a file.")
+
+    # Compute SHA256 hash
+    sha256 = hashlib.sha256()
+    with open(file_path, 'rb') as f:
+        while chunk := f.read(8192):
+            sha256.update(chunk)
+    file_hash = sha256.hexdigest()
+
+    file_name = os.path.basename(file_path)
+
+    conn = get_connection()
+    if conn is None:
+        raise RuntimeError(DB_CONN_ERR)
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        INSERT INTO code_files (file_name, file_hash, user_id)
+        VALUES (%s, %s, %s)
+    """, (file_name, file_hash, user_id))
+
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+    return file_name, file_hash

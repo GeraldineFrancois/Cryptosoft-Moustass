@@ -1,5 +1,5 @@
 import time
-from services.user_service import create_user, login_user, update_password
+from services.user_service import create_user, login_user, update_password, upload_file
 from db.database import get_user_by_email
 
 def test_create_user():
@@ -66,3 +66,36 @@ def test_update_password():
     new_login = login_user(email, new_password)
     assert new_login is not None
     assert new_login["email"] == email
+
+
+def test_upload_file():
+    import tempfile
+    import os
+
+    email = f"test_upload_{int(time.time())}@example.com"
+    temp_password, _, _ = create_user("Bob", "Builder", email)
+    user = login_user(email, temp_password)
+
+    # Create a temporary file
+    with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
+        f.write("# Test Python file\nprint('Hello World')\n")
+        temp_file_path = f.name
+
+    try:
+        # Upload the file
+        file_name, file_hash = upload_file(user["id"], temp_file_path)
+
+        assert file_name == os.path.basename(temp_file_path)
+        assert len(file_hash) == 64  # SHA256 hex length
+
+        # Verify the hash
+        import hashlib
+        sha256 = hashlib.sha256()
+        with open(temp_file_path, 'rb') as f:
+            while chunk := f.read(8192):
+                sha256.update(chunk)
+        expected_hash = sha256.hexdigest()
+        assert file_hash == expected_hash
+
+    finally:
+        os.unlink(temp_file_path)
