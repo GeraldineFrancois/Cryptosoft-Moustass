@@ -1,5 +1,5 @@
 import time
-from services.user_service import create_user
+from services.user_service import create_user, login_user
 from db.database import get_user_by_email
 
 def test_create_user():
@@ -21,3 +21,22 @@ def test_create_user():
     assert user["public_key"] is not None
     assert user["password_hash"] is not None
     assert user["password_salt"] is not None
+
+
+def test_login_user():
+    email = f"test_login_{int(time.time())}@example.com"
+
+    temp_password, _, _ = create_user("Jane", "Smith", email)
+
+    # Test successful login
+    user = login_user(email, temp_password)
+    assert user is not None
+    assert user["email"] == email
+
+    # Test failed login with wrong password
+    user_wrong = login_user(email, "wrongpassword")
+    assert user_wrong is None
+
+    # Test login with non-existent email
+    user_none = login_user("nonexistent@example.com", temp_password)
+    assert user_none is None

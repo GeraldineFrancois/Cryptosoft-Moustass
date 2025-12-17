@@ -125,7 +125,7 @@ def login_user(email: str, password: str):
         return None
 
     # Verify password
-    if verify_password(password, user["password_hash"]):
+    if verify_password(password, user["password_salt"], user["password_hash"]):
         return user
 
     return None
