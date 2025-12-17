@@ -99,3 +99,46 @@ def test_upload_file():
 
     finally:
         os.unlink(temp_file_path)
+
+
+def test_sign_and_verify_file():
+    import tempfile
+    import os
+
+    # Create admin
+    admin_email = f"test_admin_{int(time.time())}@example.com"
+    admin_password, admin_public_key, admin_private_key = create_user("Admin", "User", admin_email, role="ADMIN")
+    admin = login_user(admin_email, admin_password)
+
+    # Create user
+    user_email = f"test_user_sign_{int(time.time())}@example.com"
+    user_password, _, _ = create_user("Test", "User", user_email)
+    user = login_user(user_email, user_password)
+
+    # Create and upload file
+    with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
+        f.write("# Test file for signing\nprint('Signed')\n")
+        temp_file_path = f.name
+
+    try:
+        file_name, file_hash = upload_file(user["id"], temp_file_path)
+
+        # Get uploaded files
+        from services.user_service import get_uploaded_files
+        files = get_uploaded_files()
+        file_info = next(f for f in files if f['file_name'] == file_name)
+
+        # Sign the file
+        from services.user_service import sign_file
+        signature = sign_file(admin["id"], file_info["id"], admin_private_key)
+
+        assert signature is not None
+        assert len(signature) > 0
+
+        # Verify the signature
+        from services.user_service import verify_file_signature
+        valid = verify_file_signature(file_info["id"])
+        assert valid == True
+
+    finally:
+        os.unlink(temp_file_path)

@@ -5,28 +5,175 @@ from ui.create_user import CreateUserWindow
 from services.user_service import login_user
 
 
-def open_admin_dashboard(root):
-    dashboard = tk.Toplevel(root)
-    dashboard.title("Dashboard Administrateur")
-    dashboard.geometry("400x200")
+class AdminDashboard:
+    def __init__(self, parent, admin_user):
+        self.parent = parent
+        self.admin_user = admin_user
+        self.window = tk.Toplevel(parent)
+        self.window.title("Dashboard Administrateur")
+        self.window.geometry("500x400")
 
-    tk.Label(
-        dashboard,
-        text="Dashboard Administrateur",
-        font=("Helvetica", 14, "bold")
-    ).pack(pady=10)
+        tk.Label(
+            self.window,
+            text=f"Bienvenue {admin_user['firstname']} {admin_user['lastname']} (Admin)",
+            font=("Helvetica", 14, "bold")
+        ).pack(pady=10)
 
-    tk.Button(
-        dashboard,
-        text="Créer un Administrateur",
-        command=lambda: CreateAdminWindow(dashboard)
-    ).pack(pady=10)
+        tk.Button(
+            self.window,
+            text="Créer un Administrateur",
+            command=self.create_admin
+        ).pack(pady=5)
 
-    tk.Button(
-        dashboard,
-        text="Créer un Utilisateur",
-        command=lambda: CreateUserWindow(dashboard)
-    ).pack(pady=10)
+        tk.Button(
+            self.window,
+            text="Créer un Utilisateur",
+            command=self.create_user
+        ).pack(pady=5)
+
+        tk.Button(
+            self.window,
+            text="Signer un fichier",
+            command=self.sign_file
+        ).pack(pady=5)
+
+        tk.Button(
+            self.window,
+            text="Vérifier une signature",
+            command=self.verify_signature
+        ).pack(pady=5)
+
+        tk.Button(
+            self.window,
+            text="Fermer",
+            command=self.window.destroy
+        ).pack(pady=10)
+
+    def create_admin(self):
+        CreateAdminWindow(self.window)
+
+    def create_user(self):
+        CreateUserWindow(self.window)
+
+    def sign_file(self):
+        SignFileWindow(self.window, self.admin_user)
+
+    def verify_signature(self):
+        VerifySignatureWindow(self.window)
+
+
+class SignFileWindow:
+    def __init__(self, parent, admin_user):
+        self.parent = parent
+        self.admin_user = admin_user
+        self.window = tk.Toplevel(parent)
+        self.window.title("Signer un fichier")
+        self.window.geometry("500x400")
+
+        tk.Label(self.window, text="Fichiers uploadés:").pack(pady=5)
+
+        self.file_listbox = tk.Listbox(self.window, width=50, height=10)
+        self.file_listbox.pack(pady=5)
+
+        self.load_files()
+
+        tk.Label(self.window, text="Votre clé privée (PEM):").pack(pady=5)
+        self.private_key_text = tk.Text(self.window, height=5, width=50)
+        self.private_key_text.pack(pady=5)
+
+        tk.Button(
+            self.window,
+            text="Signer le fichier sélectionné",
+            command=self.sign_selected_file,
+            bg="#4CAF50",
+            fg="white"
+        ).pack(pady=10)
+
+    def load_files(self):
+        from services.user_service import get_uploaded_files
+        try:
+            files = get_uploaded_files()
+            self.files = files
+            for f in files:
+                self.file_listbox.insert(tk.END, f"{f['file_name']} (par {f['firstname']} {f['lastname']})")
+        except Exception as e:
+            messagebox.showerror("Erreur", f"Impossible de charger les fichiers: {str(e)}")
+
+    def sign_selected_file(self):
+        selection = self.file_listbox.curselection()
+        if not selection:
+            messagebox.showerror("Erreur", "Sélectionnez un fichier.")
+            return
+
+        file_info = self.files[selection[0]]
+        private_key_pem = self.private_key_text.get("1.0", tk.END).strip()
+
+        if not private_key_pem:
+            messagebox.showerror("Erreur", "Entrez votre clé privée.")
+            return
+
+        from services.user_service import sign_file
+        try:
+            signature = sign_file(self.admin_user['id'], file_info['id'], private_key_pem)
+            messagebox.showinfo("Succès", f"Fichier signé avec succès.\nSignature: {signature[:50]}...")
+            self.window.destroy()
+        except Exception as e:
+            messagebox.showerror("Erreur", f"Échec de la signature: {str(e)}")
+
+
+class VerifySignatureWindow:
+    def __init__(self, parent):
+        self.parent = parent
+        self.window = tk.Toplevel(parent)
+        self.window.title("Vérifier une signature")
+        self.window.geometry("500x300")
+
+        tk.Label(self.window, text="Fichiers avec signatures:").pack(pady=5)
+
+        self.file_listbox = tk.Listbox(self.window, width=50, height=10)
+        self.file_listbox.pack(pady=5)
+
+        self.load_signed_files()
+
+        tk.Button(
+            self.window,
+            text="Vérifier la signature sélectionnée",
+            command=self.verify_selected
+        ).pack(pady=10)
+
+    def load_signed_files(self):
+        from db.database import get_connection
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("""
+            SELECT cf.id, cf.file_name, u.firstname, u.lastname
+            FROM code_files cf
+            JOIN signatures s ON cf.id = s.file_id
+            JOIN users u ON cf.user_id = u.id
+        """)
+        files = cursor.fetchall()
+        cursor.close()
+        conn.close()
+        self.files = files
+        for f in files:
+            self.file_listbox.insert(tk.END, f"{f['file_name']} (par {f['firstname']} {f['lastname']})")
+
+    def verify_selected(self):
+        selection = self.file_listbox.curselection()
+        if not selection:
+            messagebox.showerror("Erreur", "Sélectionnez un fichier.")
+            return
+
+        file_info = self.files[selection[0]]
+        from services.user_service import verify_file_signature
+        try:
+            valid = verify_file_signature(file_info['id'])
+            if valid:
+                messagebox.showinfo("Succès", "La signature est valide.")
+            else:
+                messagebox.showerror("Erreur", "La signature est invalide.")
+        except Exception as e:
+            messagebox.showerror("Erreur", f"Erreur lors de la vérification: {str(e)}")
 
 
 class LoginWindow:
@@ -97,7 +244,7 @@ class LoginWindow:
         if user["first_login"] == 1:
             ChangePasswordWindow(self.root, user)
         elif user["role"] == "ADMIN":
-            open_admin_dashboard(self.root)
+            AdminDashboard(self.root, user)
         else:
             open_user_dashboard(self.root, user)
 
@@ -209,6 +356,6 @@ class ChangePasswordWindow:
         # Fermer la fenêtre et ouvrir le dashboard
         self.window.destroy()
         if self.user["role"] == "ADMIN":
-            open_admin_dashboard(self.parent)
+            AdminDashboard(self.parent, self.user)
         else:
             open_user_dashboard(self.parent, self.user)
