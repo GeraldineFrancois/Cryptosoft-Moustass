@@ -94,7 +94,9 @@ class LoginWindow:
         for widget in self.root.winfo_children():
             widget.destroy()
 
-        if user["role"] == "ADMIN":
+        if user["first_login"] == 1:
+            ChangePasswordWindow(self.root, user)
+        elif user["role"] == "ADMIN":
             open_admin_dashboard(self.root)
         else:
             open_user_dashboard(self.root, user)
@@ -122,3 +124,64 @@ class UserDashboard:
 
 def open_user_dashboard(root, user):
     UserDashboard(root, user)
+
+
+class ChangePasswordWindow:
+    def __init__(self, parent, user):
+        self.parent = parent
+        self.user = user
+        self.window = tk.Toplevel(parent)
+        self.window.title("Changer le mot de passe")
+        self.window.geometry("400x300")
+
+        tk.Label(
+            self.window,
+            text="Vous devez changer votre mot de passe temporaire.",
+            font=("Helvetica", 12)
+        ).pack(pady=10)
+
+        tk.Label(self.window, text="Nouveau mot de passe:").pack()
+        self.new_password_entry = tk.Entry(self.window, show="*", width=30)
+        self.new_password_entry.pack(pady=5)
+
+        tk.Label(self.window, text="Confirmer le mot de passe:").pack()
+        self.confirm_password_entry = tk.Entry(self.window, show="*", width=30)
+        self.confirm_password_entry.pack(pady=5)
+
+        tk.Button(
+            self.window,
+            text="Changer",
+            command=self.change_password,
+            bg="#4CAF50",
+            fg="white",
+            relief=tk.FLAT
+        ).pack(pady=15)
+
+    def change_password(self):
+        new_password = self.new_password_entry.get()
+        confirm_password = self.confirm_password_entry.get()
+
+        if not new_password or not confirm_password:
+            messagebox.showerror("Erreur", "Veuillez remplir tous les champs.")
+            return
+
+        if len(new_password) < 8:
+            messagebox.showerror("Erreur", "Le mot de passe doit contenir au moins 8 caractères.")
+            return
+
+        if new_password != confirm_password:
+            messagebox.showerror("Erreur", "Les mots de passe ne correspondent pas.")
+            return
+
+        # Mettre à jour le mot de passe
+        from services.user_service import update_password
+        update_password(self.user["id"], new_password)
+
+        messagebox.showinfo("Succès", "Mot de passe changé avec succès.")
+
+        # Fermer la fenêtre et ouvrir le dashboard
+        self.window.destroy()
+        if self.user["role"] == "ADMIN":
+            open_admin_dashboard(self.parent)
+        else:
+            open_user_dashboard(self.parent, self.user)
