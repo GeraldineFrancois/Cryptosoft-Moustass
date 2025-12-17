@@ -28,7 +28,11 @@ class CreateAdminWindow:
         name = self.name_entry.get()
         email = self.email_entry.get()
 
-        temp_password = create_admin(name, email)
+        try:
+            temp_password = create_admin(name, email)
+        except Exception as e:
+            messagebox.showerror("Erreur", f"Impossible de créer l'admin : {e}")
+            return
 
         messagebox.showinfo(
             "Admin créé",
