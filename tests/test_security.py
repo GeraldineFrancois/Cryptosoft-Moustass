@@ -4,11 +4,11 @@ from security.rsa_utils import generate_rsa_keys
 
 def test_hash_and_verify_password():
     test_pass = os.getenv("TEST_PASSWORD", "Test123!")
-    combined_hash = hash_password(test_pass)
+    salt, hashed = hash_password(test_pass)
 
-    assert combined_hash != test_pass
-    assert verify_password(test_pass, combined_hash)
-    assert not verify_password("wrongpass", combined_hash)
+    assert hashed != test_pass
+    assert verify_password(test_pass, salt, hashed)
+    assert not verify_password("wrongpass", salt, hashed)
 
 
 def test_rsa_key_generation():

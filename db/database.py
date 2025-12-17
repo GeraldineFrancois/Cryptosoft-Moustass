@@ -13,7 +13,7 @@ def get_connection():
             host=os.getenv("DB_HOST", "localhost"),
             user=os.getenv("DB_USER", "root"),
             password=os.getenv("DB_PASSWORD", "MyStrongP@ss123!"),
-            database=os.getenv("DB_NAME", "moustass_db")
+            database=os.getenv("DB_NAME", "cryptosoft_moustass")
         )
 
         if conn.is_connected():
@@ -35,7 +35,7 @@ def get_user_by_email(email: str):
     cursor = conn.cursor(dictionary=True)
 
     query = """
-        SELECT idusers, name, email, role, password_hash, is_first_password
+        SELECT id, firstname, lastname, email, role, password_hash, password_salt, public_key, first_login
         FROM users
         WHERE email = %s
     """

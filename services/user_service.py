@@ -29,30 +29,33 @@ def create_user(*args, role: str = "USER"):
     # - create_user(full_name, email)
     if len(args) == 3:
         firstname, lastname, email = args
-        name = f"{firstname} {lastname}".strip()
     elif len(args) == 2:
-        name, email = args
+        full_name, email = args
+        name_parts = full_name.split(' ', 1)
+        firstname = name_parts[0]
+        lastname = name_parts[1] if len(name_parts) > 1 else ''
     else:
         raise TypeError("create_user expects (first,last,email) or (name,email)")
 
     temp_password = generate_temp_password()
-    password_hash = hash_password(temp_password)
+    salt, password_hash = hash_password(temp_password)
+    public_key, private_key = generate_rsa_keys()
 
     conn = get_connection()
     cursor = conn.cursor()
 
     query = """
-        INSERT INTO users (name, email, role, password_hash, is_first_password)
-        VALUES (%s, %s, %s, %s, 1)
+        INSERT INTO users (firstname, lastname, email, role, password_hash, password_salt, public_key, first_login)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, 1)
     """
 
-    cursor.execute(query, (name, email, role, password_hash))
+    cursor.execute(query, (firstname, lastname, email, role, password_hash, salt, public_key))
     conn.commit()
 
     cursor.close()
     conn.close()
 
-    return temp_password
+    return temp_password, public_key, private_key
 
 
 def create_admin(name: str, email: str):
@@ -75,7 +78,7 @@ def login_admin(email: str, password: str):
     cursor = conn.cursor(dictionary=True)
 
     cursor.execute("""
-        SELECT idusers, name, email, role, password_hash, is_first_password
+        SELECT id, firstname, lastname, email, role, password_hash, password_salt, public_key, first_login
         FROM users
         WHERE email = %s
     """, (email,))
@@ -92,7 +95,7 @@ def login_admin(email: str, password: str):
         return None
 
     # Verify password using the hashing util
-    if verify_password(password, user["password_hash"]):
+    if verify_password(password, user["password_salt"], user["password_hash"]):
         return user
 
     return None
@@ -108,7 +111,7 @@ def login_user(email: str, password: str):
     cursor = conn.cursor(dictionary=True)
 
     cursor.execute("""
-        SELECT idusers, name, email, role, password_hash, is_first_password
+        SELECT id, firstname, lastname, email, role, password_hash, password_salt, public_key, first_login
         FROM users
         WHERE email = %s
     """, (email,))
@@ -128,16 +131,16 @@ def login_user(email: str, password: str):
     return None
 
 def update_password(user_id: int, new_password: str):
-    hashed = hash_password(new_password)
+    salt, hashed = hash_password(new_password)
 
     conn = get_connection()
     cursor = conn.cursor()
 
     cursor.execute("""
         UPDATE users
-        SET password_hash = %s, is_first_password = 0
-        WHERE idusers = %s
-    """, (hashed, user_id))
+        SET password_hash = %s, password_salt = %s, first_login = 0
+        WHERE id = %s
+    """, (hashed, salt, user_id))
 
     conn.commit()
     cursor.close()

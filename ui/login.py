@@ -108,7 +108,7 @@ class UserDashboard:
 
         tk.Label(
             self.window,
-            text=f"Bonjour {user['name']}, vous êtes {user['role']}.",
+            text=f"Bonjour {user['firstname']} {user['lastname']}, vous êtes {user['role']}.",
             font=("Helvetica", 14)
         ).pack(pady=50)
 
