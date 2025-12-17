@@ -107,7 +107,7 @@ def test_sign_and_verify_file():
 
     # Create admin
     admin_email = f"test_admin_{int(time.time())}@example.com"
-    admin_password, admin_public_key, admin_private_key = create_user("Admin", "User", admin_email, role="ADMIN")
+    admin_password, _, admin_private_key = create_user("Admin", "User", admin_email, role="ADMIN")
     admin = login_user(admin_email, admin_password)
 
     # Create user
@@ -121,7 +121,7 @@ def test_sign_and_verify_file():
         temp_file_path = f.name
 
     try:
-        file_name, file_hash = upload_file(user["id"], temp_file_path)
+        file_name, _ = upload_file(user["id"], temp_file_path)
 
         # Get uploaded files
         from services.user_service import get_uploaded_files
