@@ -1,0 +1,47 @@
+CREATE DATABASE IF NOT EXISTS cryptosoft_moustass;
+USE cryptosoft_moustass;
+ 
+CREATE TABLE IF NOT EXISTS users (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  firstname VARCHAR(255) NOT NULL,
+  lastname VARCHAR(255) NOT NULL,
+  email VARCHAR(255) NOT NULL UNIQUE,
+  role ENUM('ADMIN','USER') NOT NULL DEFAULT 'USER',
+  password_hash CHAR(64) NOT NULL,
+  password_salt CHAR(64) NOT NULL,
+  public_key TEXT NULL,
+  first_login BOOLEAN NOT NULL DEFAULT TRUE,
+  user_date_created DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+ 
+CREATE TABLE IF NOT EXISTS code_files (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  file_name VARCHAR(1024) NOT NULL,
+  file_hash CHAR(64) NOT NULL,
+  file_date_created DATETIME DEFAULT CURRENT_TIMESTAMP,
+  user_id INT NOT NULL,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+ 
+CREATE TABLE IF NOT EXISTS signatures (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  signature_value TEXT NOT NULL,
+  signature_date DATETIME DEFAULT CURRENT_TIMESTAMP,
+  file_id INT NOT NULL,
+  user_id INT NOT NULL,
+  FOREIGN KEY (file_id) REFERENCES code_files(id) ON DELETE CASCADE,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+ 
+CREATE TABLE IF NOT EXISTS users_logs (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  action_type ENUM('LOGIN','UPLOAD','SIGN','VERIFY') NOT NULL,
+  file_name VARCHAR(1024) NULL,
+  file_hash CHAR(64) NULL,
+  signature_value TEXT NULL,
+  public_key TEXT NULL,
+  success BOOLEAN NOT NULL,
+  log_date DATETIME DEFAULT CURRENT_TIMESTAMP,
+  user_id INT NOT NULL,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
